@@ -4,6 +4,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { QueryUserDto } from './dto/query-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -18,8 +19,12 @@ export class UsersService {
     return newUser;
   }
 
-  async findAll() {
-    return await this.userRepository.find();
+  async findAll(queryUserDto: QueryUserDto) {
+    const { filter } = queryUserDto;
+
+    return await this.userRepository.find(
+      filter ? { where: { userName: `%${filter}%` } } : {},
+    );
   }
 
   async findOne(id: string) {
