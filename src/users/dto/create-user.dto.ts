@@ -5,6 +5,10 @@ export class CreateUserDto {
   @IsString()
   userName: string;
 
+  @IsNotEmpty()
+  @IsString()
+  password: string;
+
   @IsString()
   fName: string;
 
