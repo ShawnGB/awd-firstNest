@@ -8,10 +8,10 @@ This guide explains **how** JWT authentication works in NestJS, not just what to
 
 Before diving into code, understand the two authentication flows:
 
-| Flow | Analogy | What happens |
-|------|---------|--------------|
-| **Login** | Check-in counter | Show ID (username/password) → Get boarding pass (JWT) |
-| **Access** | Security gate | Show boarding pass (JWT) → Enter if valid |
+| Flow       | Analogy          | What happens                                          |
+| ---------- | ---------------- | ----------------------------------------------------- |
+| **Login**  | Check-in counter | Show ID (username/password) → Get boarding pass (JWT) |
+| **Access** | Security gate    | Show boarding pass (JWT) → Enter if valid             |
 
 These are **separate concerns** handled by different "Strategies".
 
@@ -28,6 +28,7 @@ NestJS doesn't have built-in authentication. Instead, it integrates with **Passp
 #### 1. `PassportStrategy` - The Contract
 
 When you write:
+
 ```typescript
 export class LocalStrategy extends PassportStrategy(Strategy) {
 ```
@@ -37,10 +38,11 @@ You're NOT inheriting from a normal class. `PassportStrategy()` is a **mixin** t
 > "You MUST implement a method called `validate()`. I will call it during authentication."
 
 Think of it like implementing an interface:
+
 ```typescript
 // Conceptually what PassportStrategy expects:
 interface StrategyContract {
-  validate(...args): any;  // YOU must write this
+  validate(...args): any; // YOU must write this
 }
 ```
 
@@ -59,6 +61,7 @@ Guards in NestJS decide if a request can proceed. `AuthGuard('strategy-name')` i
 ```
 
 When a guard is triggered, it:
+
 1. Finds the strategy by name
 2. Extracts credentials (from body, headers, etc.)
 3. Calls YOUR `validate()` method
@@ -76,14 +79,14 @@ npm install @nestjs/jwt @nestjs/passport passport passport-jwt passport-local bc
 npm install --save-dev @types/passport-jwt @types/passport-local @types/bcrypt
 ```
 
-| Package | Purpose |
-|---------|---------|
-| `passport` | Core authentication engine |
-| `@nestjs/passport` | NestJS adapter for Passport |
-| `passport-local` | Strategy for username/password login |
-| `passport-jwt` | Strategy for JWT token verification |
-| `@nestjs/jwt` | Utility to create/sign tokens |
-| `bcrypt` | Password hashing (never store plain text!) |
+| Package            | Purpose                                    |
+| ------------------ | ------------------------------------------ |
+| `passport`         | Core authentication engine                 |
+| `@nestjs/passport` | NestJS adapter for Passport                |
+| `passport-local`   | Strategy for username/password login       |
+| `passport-jwt`     | Strategy for JWT token verification        |
+| `@nestjs/jwt`      | Utility to create/sign tokens              |
+| `bcrypt`           | Password hashing (never store plain text!) |
 
 ---
 
@@ -129,7 +132,7 @@ POST /auth/login { username, password }
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy],  // ← Strategies must be here!
+  providers: [AuthService, LocalStrategy, JwtStrategy], // ← Strategies must be here!
 })
 export class AuthModule {}
 ```
@@ -150,7 +153,10 @@ export class AuthService {
   ) {}
 
   // JOB 1: Validate credentials (called during login)
-  async validateUser(userName: string, pass: string): Promise<SafeUserDto | null> {
+  async validateUser(
+    userName: string,
+    pass: string,
+  ): Promise<SafeUserDto | null> {
     const user = await this.usersService.findByUsername(userName);
     if (!user) return null;
 
@@ -181,14 +187,14 @@ export class AuthService {
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
   constructor(private authService: AuthService) {
-    super();  // Uses defaults: looks for 'username' and 'password' in body
+    super(); // Uses defaults: looks for 'username' and 'password' in body
   }
 
   // Passport calls this with credentials extracted from request body
   async validate(username: string, password: string) {
     const user = await this.authService.validateUser(username, password);
     if (!user) throw new UnauthorizedException();
-    return user;  // ← This becomes req.user
+    return user; // ← This becomes req.user
   }
 }
 ```
@@ -203,8 +209,8 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Public()  // ← Bypass global JWT guard (explained in Part 5)
-  @UseGuards(AuthGuard('local'))  // ← Triggers LocalStrategy
+  @Public() // ← Bypass global JWT guard (explained in Part 5)
+  @UseGuards(AuthGuard('local')) // ← Triggers LocalStrategy
   @Post('login')
   login(@Request() req) {
     // req.user contains whatever LocalStrategy.validate() returned
@@ -248,12 +254,12 @@ Headers: { Authorization: "Bearer <token>" }
 
 ### Key Difference from LocalStrategy
 
-| | LocalStrategy | JwtStrategy |
-|---|---|---|
-| **Input** | username + password from body | Token from header |
-| **Who validates?** | YOU check DB + bcrypt | PASSPORT verifies signature |
-| **validate() receives** | Raw credentials | Already-decoded payload |
-| **When used** | Login only | Every protected request |
+|                         | LocalStrategy                 | JwtStrategy                 |
+| ----------------------- | ----------------------------- | --------------------------- |
+| **Input**               | username + password from body | Token from header           |
+| **Who validates?**      | YOU check DB + bcrypt         | PASSPORT verifies signature |
+| **validate() receives** | Raw credentials               | Already-decoded payload     |
+| **When used**           | Login only                    | Every protected request     |
 
 ### JwtStrategy
 
@@ -324,8 +330,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   canActivate(context: ExecutionContext) {
     // Check if route has @Public() decorator
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),  // Check method first
-      context.getClass(),    // Then check class
+      context.getHandler(), // Check method first
+      context.getClass(), // Then check class
     ]);
 
     // If public, skip JWT verification

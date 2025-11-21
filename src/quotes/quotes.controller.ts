@@ -10,16 +10,19 @@ import {
 import { QuotesService } from './quotes.service';
 import { Quote } from './quotes.entity';
 import { DeleteResult } from 'typeorm';
+import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('quotes')
 export class QuotesController {
   constructor(private readonly quoteService: QuotesService) {}
 
+  @Public()
   @Get()
   getAllQuotes(): Promise<Quote[]> {
     return this.quoteService.getAllQuotes();
   }
 
+  @Public()
   @Get(':id')
   getQuote(@Param('id') id: number): Promise<Quote> {
     return this.quoteService.getQuoteById(id);
